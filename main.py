@@ -114,6 +114,7 @@ class ResNet(nn.Module):
         #uniform_sample = torch.ones(10)*1/10#self.uniform.rsample(sample_shape = [ 10] )
         #entropy = self.KL_Loss(logits,uniform_sample)
             entropy = - (logits*logits.log()).sum()
+            features = features + (features_quant-features).detach()
             return features, loss_quant, entropy
         else:
             return features
