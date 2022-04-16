@@ -1,0 +1,1 @@
+epoch, test_acc, ce_loss, entropy_loss, MSE_features, MSE_rand, MSE_classif, MSE_inter, inter_coeff, MSE_hard, MSE_inter_hard, inter_hard_coeff

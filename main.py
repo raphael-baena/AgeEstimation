@@ -66,7 +66,7 @@ class ResNet(nn.Module):
         ### Quantifier dictionary
         self.embd = nn.Embedding(embedding,1)
         cat = 2
-        self.proj =  torch.empty(cat,1, embedding)
+        self.proj =  torch.empty(cat,1, embedding).cuda()
         nn.init.uniform_(self.proj)
         self.embd.weight.data.uniform_(-1/embedding, 1/embedding)
         self.MSE_Loss = torch.nn.MSELoss()
@@ -95,7 +95,7 @@ class ResNet(nn.Module):
             distances  =  torch.einsum('bd,cde -> bce', features,self.proj)
             soft_one_hot = F.gumbel_softmax(-distances, hard =True)
         #logits += torch.ra
-            logits = soft_one_hot.sum(0) / X.size()[0] # ce
+            logits = soft_one_hot.sum(0) / x.size()[0] # ce
             entropy =  - torch.sum(logits*torch.log(logits+1e-21),1).mean()
             #features = features + (features_quant-features).detach()
             return features, 0, entropy
