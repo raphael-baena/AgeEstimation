@@ -92,7 +92,7 @@ class ResNet(nn.Module):
         features = features.mean(dim = 1, keepdim = True)
         out = self.linear(features)
         if train:
-            distances  =  torch.einsum('bd,cde -> bce', features,self.proj)
+            distances  =  torch.einsum('bd,cde -> bce', features,self.proj.detach())
             soft_one_hot = F.gumbel_softmax(-distances, hard =True)
         #logits += torch.ra
             logits = soft_one_hot.sum(0) / x.size()[0] # ce
