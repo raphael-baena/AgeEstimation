@@ -65,6 +65,9 @@ class ResNet(nn.Module):
 
         ### Quantifier dictionary
         self.embd = nn.Embedding(embedding,1)
+        cat = 2
+        self.proj =  torch.empty(cat,1, embedding)
+        nn.init.uniform_(self.proj)
         self.embd.weight.data.uniform_(-1/embedding, 1/embedding)
         self.MSE_Loss = torch.nn.MSELoss()
     
@@ -88,34 +91,14 @@ class ResNet(nn.Module):
         features = out.view(out.size(0), -1)
         features = features.mean(dim = 1, keepdim = True)
         out = self.linear(features)
-        if train: ### We update the dictionary 
-            embedding_size = self.embd.weight.size(1)
-            codebook_sqr = torch.sum(self.embd.weight ** 2, dim=1)
-            inputs_flatten  = features.view(-1, embedding_size)
-            inputs_sqr = torch.sum(inputs_flatten ** 2, dim=1, keepdim=True)
-            
-            # Compute the distances to the codebook
-            distances = torch.addmm(codebook_sqr.detach() + inputs_sqr,
-            inputs_flatten, self.embd.weight.t().detach(), alpha=-2.0, beta=1.0)
-            
-            ###Soft one hot sampling
-            soft_one_hot = F.gumbel_softmax(-distances) 
-
-
-            features_quant = torch.einsum('b n, n d -> b d', soft_one_hot, self.embd.weight)
-
-            ###Reconstruction loss 
-            loss_quant = self.MSE_Loss(features_quant.detach(),features) * args.reconstruction_param + self.MSE_Loss(features_quant,features.detach()) 
-
-        #logits += torch.rand(logits.size())
-            logits = soft_one_hot.sum(0)
-            logits =  F.softmax(logits,dim=-1)
-        
-        #uniform_sample = torch.ones(10)*1/10#self.uniform.rsample(sample_shape = [ 10] )
-        #entropy = self.KL_Loss(logits,uniform_sample)
-            entropy = - (logits*logits.log()).sum()
+        if train:
+            distances  =  torch.einsum('bd,cde -> bce', features,self.proj)
+            soft_one_hot = F.gumbel_softmax(-distances, hard =True)
+        #logits += torch.ra
+            logits = soft_one_hot.sum(0) / X.size()[0] # ce
+            entropy =  - torch.sum(logits*torch.log(logits+1e-21),1).mean()
             #features = features + (features_quant-features).detach()
-            return features, loss_quant, entropy
+            return features, 0, entropy
         else:
             return features
 
