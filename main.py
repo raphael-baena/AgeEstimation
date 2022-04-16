@@ -95,8 +95,8 @@ class ResNet(nn.Module):
             inputs_sqr = torch.sum(inputs_flatten ** 2, dim=1, keepdim=True)
             
             # Compute the distances to the codebook
-            distances = torch.addmm(codebook_sqr + inputs_sqr,
-            inputs_flatten, self.embd.weight.t(), alpha=-2.0, beta=1.0)
+            distances = torch.addmm(codebook_sqr.detach() + inputs_sqr,
+            inputs_flatten, self.embd.weight.t().detach(), alpha=-2.0, beta=1.0)
             
             ###Soft one hot sampling
             soft_one_hot = F.gumbel_softmax(-distances) 
@@ -114,7 +114,7 @@ class ResNet(nn.Module):
         #uniform_sample = torch.ones(10)*1/10#self.uniform.rsample(sample_shape = [ 10] )
         #entropy = self.KL_Loss(logits,uniform_sample)
             entropy = - (logits*logits.log()).sum()
-            features = features + (features_quant-features).detach()
+            #features = features + (features_quant-features).detach()
             return features, loss_quant, entropy
         else:
             return features
